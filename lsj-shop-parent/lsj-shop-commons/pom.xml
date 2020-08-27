@@ -9,9 +9,12 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>lsj-shop-commoms</artifactId>
+    <artifactId>lsj-shop-commons</artifactId>
 
     <!--父级项目不需要打包所有packging的类型为pom-->
     <packaging>pom</packaging>
+    <modules>
+        <module>lsj-shop-common-core</module>
+    </modules>
 
 </project>
