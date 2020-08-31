@@ -15,6 +15,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>lsj-shop-basics-eureka-server</module>
+        <module>lsj-shop-basics-zuul-server</module>
     </modules>
 
 </project>
