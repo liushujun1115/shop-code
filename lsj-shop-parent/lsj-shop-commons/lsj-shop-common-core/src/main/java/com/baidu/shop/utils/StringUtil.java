@@ -20,4 +20,10 @@ public class StringUtil {
 
         return null == str || "".equals(str);
     }
+
+    //将String类型转换为Integer
+    public static Integer toInteger(String str){
+        if(isNotEmpty(str)) return Integer.parseInt(str);
+        return 0;
+    }
 }

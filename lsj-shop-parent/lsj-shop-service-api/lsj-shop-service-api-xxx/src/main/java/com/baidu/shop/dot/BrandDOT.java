@@ -32,4 +32,8 @@ public class BrandDOT extends BaseDTO {
 
     @ApiModelProperty(value = "品牌首字母")
     private Character letter;
+
+    @ApiModelProperty(value = "品牌分类信息")
+    @NotEmpty(message = "品牌分类信息不能为空",groups = {MingruiOperation.Add.class})
+    private String category;
 }
