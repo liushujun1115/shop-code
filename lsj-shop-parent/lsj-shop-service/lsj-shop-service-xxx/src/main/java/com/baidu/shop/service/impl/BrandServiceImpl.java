@@ -86,6 +86,48 @@ public class BrandServiceImpl extends BaseApiService implements BrandService {
 
         brandMapper.insertSelective(brandEntity);
 
+        this.insertCategoryAndBrand(brandDOT,brandEntity);
+
+        return this.setResultSuccess();
+    }
+
+    @Transactional
+    @Override
+    public Result<JsonObject> editBrand(BrandDOT brandDOT) {
+
+        BrandEntity brandEntity = BaiduBeanUtil.copyProperties(brandDOT, BrandEntity.class);
+
+        brandEntity.setLetter(PinyinUtil.getUpperCase(String.valueOf(brandEntity.getName().charAt(0)), PinyinUtil.TO_FIRST_CHAR_PINYIN).charAt(0));
+        brandMapper.updateByPrimaryKeySelective(brandEntity);
+
+        //通过brandId删除中间表数据
+        this.deleteCategoryAndBrand(brandEntity.getId());
+
+        //新增
+        this.insertCategoryAndBrand(brandDOT,brandEntity);
+
+        return this.setResultSuccess();
+    }
+
+    @Override
+    public Result<JsonObject> deleteBrand(Integer id) {
+        brandMapper.deleteByPrimaryKey(id);
+        this.deleteCategoryAndBrand(id);
+        return this.setResultSuccess();
+    }
+
+    //通过brandId删除中间表数据
+    private void deleteCategoryAndBrand(Integer id){
+
+        Example example = new Example(CategoryBrandEntity.class);
+        example.createCriteria().andEqualTo("brandId",id);
+        categoryBrandMapper.deleteByExample(example);
+    }
+
+    //新增关系数据
+    //@Transactional
+    private void insertCategoryAndBrand(BrandDOT brandDOT,BrandEntity brandEntity){
+
         if(brandDOT.getCategory().contains(",")){
 
 //            通过split方法分割字符串得到Array
@@ -109,24 +151,12 @@ public class BrandServiceImpl extends BaseApiService implements BrandService {
             }).collect(Collectors.toList());
             //批量新增
             categoryBrandMapper.insertList(categoryBrandEntities);
-
-
-//            forEach方法遍历
-//            list.stream().forEach(cid -> {
-//                CategoryBrandEntity entity = new CategoryBrandEntity();
-//                entity.setCategoryId(StringUtil.toInteger(cid));
-//                entity.setBrandId(brandDOT.getId());
-//                categoryBrandEntities.add(entity);
-//            });
         }else{
-
             CategoryBrandEntity entity = new CategoryBrandEntity();
             entity.setCategoryId(StringUtil.toInteger(brandDOT.getCategory()));
             entity.setBrandId(brandEntity.getId());
             categoryBrandMapper.insertSelective(entity);
         }
-
-        return this.setResultSuccess();
     }
 
 }

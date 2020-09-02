@@ -21,7 +21,7 @@ import java.util.List;
 @Api(tags = "商品分类接口")
 public interface CategoryService {
 
-    @ApiOperation(value = "通过查询商品分类")
+    @ApiOperation(value = "查询商品分类")
     @GetMapping(value = "category/list")
     Result<List<CategoryEntity>> getCategoryByPid(Integer pid);
 
@@ -37,4 +37,7 @@ public interface CategoryService {
     @DeleteMapping(value = "category/delete")
     Result<JsonObject> deleteCategory(Integer id);
 
+    @ApiOperation(value = "通过品牌id查询商品分类")
+    @GetMapping(value = "category/getByBrand")
+    Result<List<CategoryEntity>> getByBrand(Integer brandId);
 }
