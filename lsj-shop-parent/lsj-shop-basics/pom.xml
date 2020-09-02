@@ -16,6 +16,7 @@
     <modules>
         <module>lsj-shop-basics-eureka-server</module>
         <module>lsj-shop-basics-zuul-server</module>
+        <module>lsj-shop-basics-upload-server</module>
     </modules>
 
 </project>
