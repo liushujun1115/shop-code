@@ -16,7 +16,7 @@ import java.util.List;
 
 /**
  * @ClassName GlobalException
- * @Description: TODO
+ * @Description: 全局异常处理
  * @Author liushujun
  * @Date 2020/8/29
  * @Version V1.0

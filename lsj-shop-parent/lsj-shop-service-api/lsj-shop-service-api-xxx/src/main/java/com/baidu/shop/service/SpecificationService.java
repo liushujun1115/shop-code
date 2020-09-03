@@ -2,7 +2,10 @@ package com.baidu.shop.service;
 
 import com.baidu.shop.base.Result;
 import com.baidu.shop.dto.SpecGroupDTO;
+import com.baidu.shop.dto.SpecParamDTO;
 import com.baidu.shop.entity.SpecGroupEntity;
+import com.baidu.shop.entity.SpecParamEntity;
+import com.baidu.shop.utils.JSONUtil;
 import com.baidu.shop.validate.group.MingruiOperation;
 import com.google.gson.JsonObject;
 import io.swagger.annotations.Api;
@@ -30,4 +33,21 @@ public interface SpecificationService {
     @ApiOperation(value = "删除规格组")
     @DeleteMapping(value = "specgroup/deleteSpecGroup")
     Result<JsonObject> removeSpecGroup(Integer id);
+
+    @ApiOperation(value = "查询规格参数")
+    @GetMapping(value = "specparam/getSpecParamInfo")
+    Result<List<SpecParamEntity>> getSpecParamInfo(SpecParamDTO specParamDTO);
+
+    @ApiOperation(value = "新增规格参数")
+    @PostMapping(value = "specparam/saveSpecParam")
+    Result<JsonObject> saveSpecParam(@Validated({MingruiOperation.Add.class}) @RequestBody SpecParamDTO specParamDTO);
+
+    @ApiOperation(value = "修改规格参数")
+    @PutMapping(value = "specparam/saveSpecParam")
+    Result<JSONUtil> editSpecParam(@Validated({MingruiOperation.Update.class}) @RequestBody SpecParamDTO specParamDTO);
+
+    @ApiOperation(value = "删除规格参数")
+    @DeleteMapping(value = "specparam/deleteSpecParam")
+    Result<JsonObject> deleteSpecParam(Integer id);
 }
+
