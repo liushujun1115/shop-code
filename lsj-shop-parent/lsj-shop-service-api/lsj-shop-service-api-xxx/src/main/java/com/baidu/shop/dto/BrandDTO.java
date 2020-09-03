@@ -1,4 +1,4 @@
-package com.baidu.shop.dot;
+package com.baidu.shop.dto;
 
 import com.baidu.shop.base.BaseDTO;
 import com.baidu.shop.validate.group.MingruiOperation;
@@ -10,15 +10,16 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 /**
- * @ClassName BrandDOT
+ * @ClassName BrandDTO
  * @Description: TODO
  * @Author liushujun
- * @Date 2020/8/31
+ * @Date 2020/9/3
  * @Version V1.0
  **/
 @ApiModel(value = "品牌DTO")
 @Data
-public class BrandDOT extends BaseDTO {
+public class BrandDTO extends BaseDTO {
+
     @ApiModelProperty(value = "品牌主键",example = "1")
     @NotNull(message = "主键不能为空", groups = {MingruiOperation.Update.class})
     private Integer id;
