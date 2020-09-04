@@ -66,7 +66,6 @@ public class SpecificationServiceImpl extends BaseApiService implements Specific
         Example example = new Example(SpecParamEntity.class);
         example.createCriteria().andEqualTo("groupId",id);
         List<SpecParamEntity> list = specParamMapper.selectByExample(example);
-
         if(list.size() > 0) return this.setResultError("规格组不为空,不能删除");
 
         specGroupMapper.deleteByPrimaryKey(id);

@@ -1,11 +1,15 @@
 package com.baidu.shop.service.impl;
 
 import com.baidu.shop.entity.CategoryBrandEntity;
+import com.baidu.shop.entity.SpecGroupEntity;
+import com.baidu.shop.entity.SpecParamEntity;
 import com.baidu.shop.mapper.CategoryBrandMapper;
 import com.baidu.shop.mapper.CategoryMapper;
 import com.baidu.shop.base.BaseApiService;
 import com.baidu.shop.base.Result;
 import com.baidu.shop.entity.CategoryEntity;
+import com.baidu.shop.mapper.SpecGroupMapper;
+import com.baidu.shop.mapper.SpecParamMapper;
 import com.baidu.shop.service.CategoryService;
 import com.google.gson.JsonObject;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +17,9 @@ import org.springframework.web.bind.annotation.RestController;
 import tk.mybatis.mapper.entity.Example;
 
 import javax.annotation.Resource;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @ClassName CategoryServiceImpl
@@ -30,6 +36,9 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
 
     @Resource
     private CategoryBrandMapper categoryBrandMapper;
+
+    @Resource
+    private SpecGroupMapper specGroupMapper;
 
     @Override
     public Result<List<CategoryEntity>> getCategoryByPid(Integer pid) {
@@ -76,6 +85,19 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
         if(categoryEntity.getIsParent() == 1){
             return this.setResultError("当前节点为父节点,不能删除");
         }
+
+        //如果分类被品牌绑定,不能删除
+        Example example1 = new Example(CategoryBrandEntity.class);
+        example1.createCriteria().andEqualTo("categoryId",id);
+        List<CategoryBrandEntity> list1 = categoryBrandMapper.selectByExample(example1);
+        if(list1.size() > 0) return this.setResultError("当前分类被品牌绑定,不能删除");
+
+
+        Example example2 = new Example(SpecGroupEntity.class);
+        example2.createCriteria().andEqualTo("cid",id);
+        List<SpecGroupEntity> list2 = specGroupMapper.selectByExample(example2);
+        if(list2.size() > 0) return this.setResultError("当前分类被规格组绑定,不能删除");
+
         //构建条件查询 通过当前被删除节点的父级节点parentid查询数据
         Example example = new Example(CategoryEntity.class);
         example.createCriteria().andEqualTo("parentId",categoryEntity.getParentId());
@@ -99,4 +121,6 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
         List<CategoryEntity> list = categoryMapper.getByBrandId(brandId);
         return this.setResultSuccess(list);
     }
+
+
 }
