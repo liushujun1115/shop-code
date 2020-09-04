@@ -1,5 +1,7 @@
 package com.baidu.shop.service.impl;
 
+import com.baidu.shop.entity.CategoryBrandEntity;
+import com.baidu.shop.mapper.CategoryBrandMapper;
 import com.baidu.shop.mapper.CategoryMapper;
 import com.baidu.shop.base.BaseApiService;
 import com.baidu.shop.base.Result;
@@ -25,6 +27,9 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
 
     @Resource
     private CategoryMapper categoryMapper;
+
+    @Resource
+    private CategoryBrandMapper categoryBrandMapper;
 
     @Override
     public Result<List<CategoryEntity>> getCategoryByPid(Integer pid) {
@@ -85,6 +90,7 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
         }
 
         categoryMapper.deleteByPrimaryKey(id);
+
         return this.setResultSuccess("删除成功");
     }
 
