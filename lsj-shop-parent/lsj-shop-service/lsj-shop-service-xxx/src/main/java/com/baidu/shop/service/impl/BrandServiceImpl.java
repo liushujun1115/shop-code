@@ -118,6 +118,12 @@ public class BrandServiceImpl extends BaseApiService implements BrandService {
         return this.setResultSuccess();
     }
 
+    @Override
+    public Result<List<BrandEntity>> getBrandByCategory(Integer cid) {
+        List<BrandEntity> list = brandMapper.getBrandByCategory(cid);
+        return this.setResultSuccess(list);
+    }
+
     //通过brandId删除中间表数据
     private void deleteCategoryAndBrand(Integer id){
 
