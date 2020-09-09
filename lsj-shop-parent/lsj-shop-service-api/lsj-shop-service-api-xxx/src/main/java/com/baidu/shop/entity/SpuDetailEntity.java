@@ -25,7 +25,7 @@ public class SpuDetailEntity {
 
     private String specialSpec;
 
-    private String packageList;
+    private String packingList;
 
     private String afterService;
 }
