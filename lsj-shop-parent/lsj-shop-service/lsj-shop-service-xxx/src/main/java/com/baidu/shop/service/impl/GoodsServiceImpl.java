@@ -17,6 +17,7 @@ import com.baidu.shop.utils.ObjectUtil;
 import com.baidu.shop.utils.StringUtil;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
+import com.google.gson.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
@@ -137,17 +138,40 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
         SpuDetailEntity spuDetailEntity = BaiduBeanUtil.copyProperties(spuDTO.getSpuDetail(), SpuDetailEntity.class);
         spuDetailEntity.setSpuId(spuDTO.getId());
         spuDetailMapper.updateByPrimaryKeySelective(spuDetailEntity);
-//    3. 通过spuId查询出来将要被删除的sku  通过spuid删除sku 然后新增
-        Example example = new Example(SkuEntity.class);
-        example.createCriteria().andEqualTo("spuId",spuDTO.getId());
-        List<SkuEntity> skuEntities = skuMapper.selectByExample(example);
-        List<Long> skuIdArr = skuEntities.stream().map(sku -> sku.getId()).collect(Collectors.toList());
+//    3. 通过spuId查询出来将要被删除的sku 先删除再新增
+        List<Long> skuIdArr = this.getSkuIdArrBySpu(spuDTO.getId());
         skuMapper.deleteByIdList(skuIdArr);
         stockMapper.deleteByIdList(skuIdArr);
 //    7. 将新的数据新增到数据库
         this.saveSkusAndStocks(spuDTO.getSkus(),spuDTO.getId(),date);
 
         return this.setResultSuccess();
+    }
+
+    @Override
+    @Transactional
+    public Result<JsonObject> removeSpu(Integer spuId) {
+        //删除spu
+        spuMapper.deleteByPrimaryKey(spuId);
+        //删除spuDetail
+        spuDetailMapper.deleteByPrimaryKey(spuId);
+        //删除sku 先通过spuId查询要删除的sku
+        List<Long> skuIdArr = this.getSkuIdArrBySpu(spuId);
+        if(skuIdArr.size() > 0){
+            //删除sku
+            skuMapper.deleteByIdList(skuIdArr);
+            //删除stock 同样先查询要删除的sku
+            stockMapper.deleteByIdList(skuIdArr);
+        }
+        return this.setResultSuccess();
+    }
+
+    //通过spuId查询要删除的sku
+    private List<Long> getSkuIdArrBySpu(Integer spuId){
+        Example example = new Example(SkuEntity.class);
+        example.createCriteria().andEqualTo("spuId",spuId);
+        List<SkuEntity> skuEntities = skuMapper.selectByExample(example);
+        return skuEntities.stream().map(sku -> sku.getId()).collect(Collectors.toList());
     }
 
     //新增sku/stock
