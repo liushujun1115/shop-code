@@ -20,6 +20,7 @@ import com.github.pagehelper.PageInfo;
 import com.google.gson.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import tk.mybatis.mapper.entity.Example;
 
@@ -165,6 +166,32 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
         }
         return this.setResultSuccess();
     }
+
+    @Override
+    @Transactional
+    public Result<JSONObject> upOrDown(SpuDTO spuDTO) {
+        SpuEntity spuEntity = BaiduBeanUtil.copyProperties(spuDTO, SpuEntity.class);
+        spuEntity.setId(spuDTO.getId());
+        if(spuEntity.getSaleable() == 1){
+            spuEntity.setSaleable(0);
+            spuMapper.updateByPrimaryKeySelective(spuEntity);
+            return this.setResultSuccess("下架成功");
+        }else{
+            spuEntity.setSaleable(1);
+            spuMapper.updateByPrimaryKeySelective(spuEntity);
+            return this.setResultSuccess("上架成功");
+        }
+    }
+
+//    @Override
+//    @Transactional
+//    public Result<JSONObject> upOrDown(Integer id,Integer saleable) {
+//        SpuEntity spuEntity = new SpuEntity();
+//        spuEntity.setId(id);
+//        spuEntity.setSaleable(saleable);
+//        spuMapper.updateByPrimaryKeySelective(spuEntity);
+//        return this.setResultSuccess("修改状态成功");
+//    }
 
     //通过spuId查询要删除的sku
     private List<Long> getSkuIdArrBySpu(Integer spuId){
