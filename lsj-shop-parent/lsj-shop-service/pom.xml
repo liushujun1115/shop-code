@@ -15,6 +15,7 @@
     <packaging>pom</packaging>
     <modules>
         <module>lsj-shop-service-xxx</module>
+        <module>lsj-shop-service-search</module>
     </modules>
 
     <dependencies>
