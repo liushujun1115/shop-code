@@ -7,22 +7,33 @@ import com.baidu.shop.document.GoodsDoc;
 import com.baidu.shop.dto.SkuDTO;
 import com.baidu.shop.dto.SpecParamDTO;
 import com.baidu.shop.dto.SpuDTO;
+import com.baidu.shop.entity.BrandEntity;
+import com.baidu.shop.entity.CategoryEntity;
 import com.baidu.shop.entity.SpecParamEntity;
 import com.baidu.shop.entity.SpuDetailEntity;
-import com.baidu.shop.entity.SpuEntity;
-import com.baidu.shop.feign.Goods;
+import com.baidu.shop.feign.BrandFeign;
+import com.baidu.shop.feign.CategoryFeign;
 import com.baidu.shop.feign.GoodsFeign;
 import com.baidu.shop.feign.SpecificationFeign;
+import com.baidu.shop.response.GoodsResponse;
 import com.baidu.shop.service.ShopElasticsearchService;
 import com.baidu.shop.status.HTTPStatus;
-import com.baidu.shop.utils.BaiduBeanUtil;
+import com.baidu.shop.utils.ESHighLightUtil;
 import com.baidu.shop.utils.JSONUtil;
-import com.github.pagehelper.PageInfo;
+import com.baidu.shop.utils.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.elasticsearch.core.ElasticsearchRestTemplate;
 import org.springframework.data.elasticsearch.core.IndexOperations;
+import org.springframework.data.elasticsearch.core.SearchHit;
+import org.springframework.data.elasticsearch.core.SearchHits;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.ArrayList;
@@ -47,6 +58,12 @@ public class ShopElasticsearchServiceImpl extends BaseApiService implements Shop
 
     @Autowired
     private SpecificationFeign specificationFeign;
+
+    @Autowired
+    private BrandFeign brandFeign;
+
+    @Autowired
+    private CategoryFeign categoryFeign;
     
     @Autowired
     private ElasticsearchRestTemplate elasticsearchRestTemplate;
@@ -78,7 +95,70 @@ public class ShopElasticsearchServiceImpl extends BaseApiService implements Shop
         return this.setResultSuccess();
     }
 
-    //mysql数据迁移到es做数据准备s
+    @Override
+    public GoodsResponse search(String search,Integer page) {
+
+        if(StringUtil.isEmpty(search)) throw new RuntimeException("查询内容不能为null");
+        //searchHits 得到查询结果
+        SearchHits<GoodsDoc> searchHits = elasticsearchRestTemplate.search(this.getSearchQueryBuilder(search,page).build(), GoodsDoc.class);
+        //构建高亮
+        List<SearchHit<GoodsDoc>> highLightHit = ESHighLightUtil.getHighLightHit(searchHits.getSearchHits());
+        //搜索
+        List<GoodsDoc> goodsList = highLightHit.stream().map(searchHit -> searchHit.getContent() ).collect(Collectors.toList());
+        //总条数 & 总页数
+        long total = searchHits.getTotalHits();
+        long totalPage = Double.valueOf(Math.ceil(Long.valueOf(total).doubleValue() / 10)).longValue();
+
+        //聚合 获得品牌,分类集合
+        Aggregations aggregations = searchHits.getAggregations();
+        List<BrandEntity> brandList = this.getBrandList(aggregations);
+        List<CategoryEntity> categoryList = this.getCategoryList(aggregations);
+
+        return new GoodsResponse(total,totalPage,brandList,categoryList,goodsList);
+    }
+
+    //构建查询
+    private NativeSearchQueryBuilder getSearchQueryBuilder(String search,Integer page){
+        NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder();
+        //match只能查询一个字段  multiMatch可以查询多个字段
+        queryBuilder.withQuery(QueryBuilders.multiMatchQuery(search, "brandName", "categoryName", "title"));
+        //构建聚合查询 terms查询  field通过哪个字段
+        queryBuilder.addAggregation(AggregationBuilders.terms("cid_agg").field("cid3"));
+        queryBuilder.addAggregation(AggregationBuilders.terms("brand_agg").field("brandId"));
+        //构建高亮字段
+        queryBuilder.withHighlightBuilder(ESHighLightUtil.getHighlightBuilder("title"));
+        //分页
+        queryBuilder.withPageable(PageRequest.of(page-1,10));
+        return queryBuilder;
+    }
+
+    //通过聚合 获得分类集合
+    private List<CategoryEntity> getCategoryList(Aggregations aggregations){
+
+        Terms cid_agg = aggregations.get("cid_agg");
+        List<? extends Terms.Bucket> cidBuckets = cid_agg.getBuckets();
+        //返回一个id的集合-->通过id的集合去查询数据
+        //可以通过new StringBuffer
+        List<String> cidList = cidBuckets.stream().map(cidBucket -> cidBucket.getKeyAsString()).collect(Collectors.toList());
+        //通过分类id集合去查询数据
+        //将List集合转换成,分隔的string字符串
+        // String.join(",", cidList); 通过,分隔list集合 --> 返回,拼接的string字符串
+        String cidsStr = String.join(",", cidList);
+        Result<List<CategoryEntity>> categoryResult =  categoryFeign.getCategoryByIdList(cidsStr);
+
+        return categoryResult.getData();
+    }
+
+    //通过聚合 获得品牌集合
+    private List<BrandEntity> getBrandList(Aggregations aggregations){
+        Terms brand_agg = aggregations.get("brand_agg");
+        List<String> brandList = brand_agg.getBuckets()
+                .stream().map(brandBucket -> brandBucket.getKeyAsString()).collect(Collectors.toList());
+        Result<List<BrandEntity>> brandResult =  brandFeign.getBrandByIdList(String.join(",", brandList));
+        return brandResult.getData();
+    }
+
+    //mysql数据迁移到es做数据准备
     private List<GoodsDoc> esGoodsInfo() {
         //查询spu
         SpuDTO spuDTO = new SpuDTO();

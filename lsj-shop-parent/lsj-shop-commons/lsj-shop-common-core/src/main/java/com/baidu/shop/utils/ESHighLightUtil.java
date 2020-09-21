@@ -27,7 +27,7 @@ public class ESHighLightUtil<T> {
         Arrays.asList(highLightField).forEach(hlf -> {
             HighlightBuilder.Field field = new HighlightBuilder.Field(hlf);
 
-            field.preTags("<span style=color:red'>");
+            field.preTags("<span style='color:red'>");
             field.postTags("</span>");
 
             highlightBuilder.field(field);

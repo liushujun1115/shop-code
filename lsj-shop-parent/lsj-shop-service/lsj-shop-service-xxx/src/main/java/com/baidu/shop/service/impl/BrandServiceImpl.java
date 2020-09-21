@@ -135,6 +135,14 @@ public class BrandServiceImpl extends BaseApiService implements BrandService {
         return this.setResultSuccess(list);
     }
 
+    @Override
+    public Result<List<BrandEntity>> getBrandByIdList(String brandsStr) {
+        List<Integer> brandList = Arrays.asList(brandsStr.split(","))
+                .stream().map(brandStr -> Integer.parseInt(brandStr)).collect(Collectors.toList());
+        List<BrandEntity> list = brandMapper.selectByIdList(brandList);
+        return this.setResultSuccess(list);
+    }
+
     //通过brandId删除中间表数据
     private void deleteCategoryAndBrand(Integer id){
         Example example = new Example(CategoryBrandEntity.class);
