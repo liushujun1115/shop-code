@@ -130,7 +130,7 @@ public class CategoryServiceImpl extends BaseApiService implements CategoryServi
 //        List<String> strings = Arrays.asList(split);
 //        strings.stream().map()
         List<Integer> cidList = Arrays.asList(cidsStr.split(","))
-                .stream().map(cidStr -> Integer.parseInt(cidsStr)).collect(Collectors.toList());
+                .stream().map(cidStr -> Integer.parseInt(cidStr)).collect(Collectors.toList());
         List<CategoryEntity> list = categoryMapper.selectByIdList(cidList);
         return this.setResultSuccess(list);
     }

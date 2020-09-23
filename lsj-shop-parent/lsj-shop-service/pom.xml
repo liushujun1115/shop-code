@@ -16,6 +16,8 @@
     <modules>
         <module>lsj-shop-service-xxx</module>
         <module>lsj-shop-service-search</module>
+        <module>mingrui-shop-service-template</module>
+        <module>lsj-shop-service-template</module>
     </modules>
 
     <dependencies>

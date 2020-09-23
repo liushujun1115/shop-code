@@ -23,6 +23,8 @@ import com.baidu.shop.utils.JSONUtil;
 import com.baidu.shop.utils.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -62,7 +64,7 @@ public class ShopElasticsearchServiceImpl extends BaseApiService implements Shop
 
     @Autowired
     private CategoryFeign categoryFeign;
-    
+
     @Autowired
     private ElasticsearchRestTemplate elasticsearchRestTemplate;
 
@@ -94,11 +96,11 @@ public class ShopElasticsearchServiceImpl extends BaseApiService implements Shop
     }
 
     @Override
-    public GoodsResponse search(String search,Integer page) {
+    public GoodsResponse search(String search,Integer page,String filter) {
 
         if(StringUtil.isEmpty(search)) throw new RuntimeException("查询内容不能为null");
         //searchHits 得到查询结果
-        SearchHits<GoodsDoc> searchHits = elasticsearchRestTemplate.search(this.getSearchQueryBuilder(search,page).build(), GoodsDoc.class);
+        SearchHits<GoodsDoc> searchHits = elasticsearchRestTemplate.search(this.getSearchQueryBuilder(search,page,filter).build(), GoodsDoc.class);
         //构建高亮
         List<SearchHit<GoodsDoc>> highLightHit = ESHighLightUtil.getHighLightHit(searchHits.getSearchHits());
         //搜索
@@ -157,8 +159,26 @@ public class ShopElasticsearchServiceImpl extends BaseApiService implements Shop
     }
 
     //构建查询
-    private NativeSearchQueryBuilder getSearchQueryBuilder(String search,Integer page){
+    private NativeSearchQueryBuilder getSearchQueryBuilder(String search,Integer page,String filter){
         NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder();
+
+        if(StringUtil.isNotEmpty(filter) && filter.length() > 2){
+            BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+            Map<String, String> filterMap = JSONUtil.toMapValueString(filter);
+            filterMap.forEach((key,value) -> {
+                MatchQueryBuilder matchQuery = null;
+
+                //分类 品牌和 规格参数的查询方式不一样
+                if(key.equals("cid3") || key.equals("brandId")){
+                    matchQuery = QueryBuilders.matchQuery(key, value);
+                }else{
+                    matchQuery = QueryBuilders.matchQuery("specs."+ key +".keyword",value);
+                }
+                boolQueryBuilder.must(matchQuery);
+            });
+            queryBuilder.withFilter(boolQueryBuilder);
+        }
+
         //match只能查询一个字段  multiMatch可以查询多个字段
         queryBuilder.withQuery(QueryBuilders.multiMatchQuery(search, "brandName", "categoryName", "title"));
         //构建聚合查询 terms查询  field通过哪个字段
