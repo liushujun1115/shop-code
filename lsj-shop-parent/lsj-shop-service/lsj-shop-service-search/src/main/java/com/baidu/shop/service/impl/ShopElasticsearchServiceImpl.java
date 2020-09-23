@@ -24,6 +24,7 @@ import com.baidu.shop.utils.StringUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.aggregations.Aggregation;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.Aggregations;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
@@ -36,10 +37,7 @@ import org.springframework.data.elasticsearch.core.SearchHits;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -112,9 +110,50 @@ public class ShopElasticsearchServiceImpl extends BaseApiService implements Shop
         //聚合 获得品牌,分类集合
         Aggregations aggregations = searchHits.getAggregations();
         List<BrandEntity> brandList = this.getBrandList(aggregations);
-        List<CategoryEntity> categoryList = this.getCategoryList(aggregations);
+        Map<Integer, List<CategoryEntity>> map = this.getCategoryList(aggregations);
 
-        return new GoodsResponse(total,totalPage,brandList,categoryList,goodsList);
+        List<CategoryEntity> categoryList = null;
+        Integer hotCid = 0;//热度最高的cid
+
+        for(Map.Entry<Integer, List<CategoryEntity>> mapEntry : map.entrySet()){
+            hotCid = mapEntry.getKey();
+            categoryList = mapEntry.getValue();
+        }
+
+        Map<String, List<String>> specParamValueMap = this.getSpecParam(hotCid, search);
+
+        return new GoodsResponse(total,totalPage,brandList,categoryList,goodsList,specParamValueMap);
+    }
+
+    //聚合查询规格参数
+    private Map<String, List<String>> getSpecParam(Integer hotCid,String search){
+        SpecParamDTO specParamDTO = new SpecParamDTO();
+        specParamDTO.setCid(hotCid);
+        specParamDTO.setSearching(true);
+
+        Result<List<SpecParamEntity>> specParamResult = specificationFeign.getSpecParamInfo(specParamDTO);
+
+        if(specParamResult.getCode() == 200){
+            List<SpecParamEntity> specParamList = specParamResult.getData();
+            //聚合查询
+            NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder();
+            queryBuilder.withQuery(QueryBuilders.multiMatchQuery(search, "brandName", "categoryName", "title"));
+            queryBuilder.withPageable(PageRequest.of(0,1));//分页必须要查一条数据
+            specParamList.stream().forEach(specParam -> {
+                queryBuilder.addAggregation(AggregationBuilders.terms(specParam.getName()).field("specs."+specParam.getName()+".keyword"));
+            });
+            SearchHits<GoodsDoc> searchHits = elasticsearchRestTemplate.search(queryBuilder.build(), GoodsDoc.class);
+            Map<String, List<String>> map = new HashMap<>();
+            Aggregations aggregations = searchHits.getAggregations();
+            specParamList.stream().forEach(specParam -> {
+                Terms terms = aggregations.get(specParam.getName());
+                List<? extends Terms.Bucket> buckets = terms.getBuckets();
+                List<String> valueList = buckets.stream().map(bucket -> bucket.getKeyAsString()).collect(Collectors.toList());
+                map.put(specParam.getName(),valueList);
+            });
+            return map;
+        }
+        return null;
     }
 
     //构建查询
@@ -133,27 +172,42 @@ public class ShopElasticsearchServiceImpl extends BaseApiService implements Shop
     }
 
     //通过聚合 获得分类集合
-    private List<CategoryEntity> getCategoryList(Aggregations aggregations){
+    private Map<Integer, List<CategoryEntity>> getCategoryList(Aggregations aggregations){
 
         Terms cid_agg = aggregations.get("cid_agg");
         List<? extends Terms.Bucket> cidBuckets = cid_agg.getBuckets();
-        //返回一个id的集合-->通过id的集合去查询数据
-        //可以通过new StringBuffer
-        List<String> cidList = cidBuckets.stream().map(cidBucket -> cidBucket.getKeyAsString()).collect(Collectors.toList());
-        //通过分类id集合去查询数据
-        //将List集合转换成,分隔的string字符串
-        // String.join(",", cidList); 通过,分隔list集合 --> 返回,拼接的string字符串
+
+        //热度最高的cid
+        List<Integer> hotCidArr = Arrays.asList(0);
+        List<Long> maxCount = Arrays.asList(0L);
+
+        Map<Integer, List<CategoryEntity>> map = new HashMap<>();
+
+        List<String> cidList = cidBuckets.stream().map(cidBucket -> {
+
+            if(cidBucket.getDocCount() > maxCount.get(0)){
+                maxCount.set(0,cidBucket.getDocCount());
+                hotCidArr.set(0,cidBucket.getKeyAsNumber().intValue());
+            }
+            return cidBucket.getKeyAsString();
+        }).collect(Collectors.toList());
+
         String cidsStr = String.join(",", cidList);
         Result<List<CategoryEntity>> categoryResult =  categoryFeign.getCategoryByIdList(cidsStr);
 
-        return categoryResult.getData();
+        map.put(hotCidArr.get(0),categoryResult.getData());
+        return map;
     }
 
     //通过聚合 获得品牌集合
     private List<BrandEntity> getBrandList(Aggregations aggregations){
         Terms brand_agg = aggregations.get("brand_agg");
+        //返回一个id的集合-->通过id的集合去查询数据
+        //可以通过new StringBuffer
         List<String> brandList = brand_agg.getBuckets()
                 .stream().map(brandBucket -> brandBucket.getKeyAsString()).collect(Collectors.toList());
+        //将List集合转换成,分隔的string字符串
+        // String.join(",", cidList); 通过,分隔list集合 --> 返回,拼接的string字符串
         Result<List<BrandEntity>> brandResult =  brandFeign.getBrandByIdList(String.join(",", brandList));
         return brandResult.getData();
     }
