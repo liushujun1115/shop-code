@@ -42,10 +42,6 @@ public interface GoodsService {
     @DeleteMapping(value = "goods/removeSpu")
     Result<JsonObject> removeSpu(Integer spuId);
 
-//    @ApiOperation(value = "修改上下架状态")
-//    @GetMapping(value = "goods/upOrDown")
-//    Result<JSONObject> upOrDown(Integer id,Integer saleable);
-
     @ApiOperation(value = "修改上下架状态")
     @PutMapping(value = "goods/upOrDown")
     Result<JSONObject> upOrDown(@RequestBody SpuDTO spuDTO);

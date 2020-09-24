@@ -103,14 +103,8 @@
                     <li th:each="cate : ${categoryInfo}">
                         <a href="#" th:text="${cate.name}"></a>
                     </li>
-<!--                    <li>-->
-<!--                        <a href="#">手机通讯</a>-->
-<!--                    </li>-->
-<!--                    <li>-->
-<!--                        <a href="#">手机</a>-->
-<!--                    </li>-->
                     <li>
-                        <a href="#" th:text="${brandInfo.name}"></a>
+                        <a href="#">{{brandInfo.name}}</a>
                     </li>
                     <li class="active" th:text="${spuInfo.title}"></li>
                 </ul>
@@ -123,7 +117,7 @@
                         <!--默认第一个预览-->
                         <div id="preview" class="spec-preview">
 							<span class="jqzoom">
-								<img jqimg="/img/_/b1.png" src="/img/_/s1.png" width="400px" height="400px"/>
+								<img :jqimg="images[0]" :src="images[0]" width="400px" height="400px"/>
 							</span>
                         </div>
                         <!--下方的缩略图-->
@@ -132,15 +126,9 @@
                             <!--左右按钮-->
                             <div class="items">
                                 <ul>
-                                    <li><img src="/img/_/s1.png" bimg="/img/_/b1.png" onmousemove="preview(this)" /></li>
-                                    <li><img src="/img/_/s2.png" bimg="/img/_/b2.png" onmousemove="preview(this)" /></li>
-                                    <li><img src="/img/_/s3.png" bimg="/img/_/b3.png" onmousemove="preview(this)" /></li>
-                                    <li><img src="/img/_/s1.png" bimg="/img/_/b1.png" onmousemove="preview(this)" /></li>
-                                    <li><img src="/img/_/s2.png" bimg="/img/_/b2.png" onmousemove="preview(this)" /></li>
-                                    <li><img src="/img/_/s3.png" bimg="/img/_/b3.png" onmousemove="preview(this)" /></li>
-                                    <li><img src="/img/_/s1.png" bimg="/img/_/b1.png" onmousemove="preview(this)" /></li>
-                                    <li><img src="/img/_/s2.png" bimg="/img/_/b2.png" onmousemove="preview(this)" /></li>
-                                    <li><img src="/img/_/s3.png" bimg="/img/_/b3.png" onmousemove="preview(this)" /></li>
+                                    <li v-for="image in images">
+                                        <img :src="image" :bimg="image" onmousemove="preview(this)" />
+                                    </li>
                                 </ul>
                             </div>
                             <a class="next">&gt;</a>
@@ -149,14 +137,14 @@
                 </div>
                 <div class="fr itemInfo-wrap">
                     <div class="sku-name">
-                        <h4>Apple iPhone 6s（A1700）64G玫瑰金色 移动通信电信4G手机</h4>
+                        <h4>{{sku.title}}</h4>
                     </div>
-                    <div class="news"><span>推荐选择下方[移动优惠购],手机套餐齐搞定,不用换号,每月还有花费返</span></div>
+                    <div class="news"><span th:utext="${spuInfo.subTitle}"></span></div>
                     <div class="summary">
                         <div class="summary-wrap">
                             <div class="fl title"><i>价　　格</i></div>
                             <div class="fl price">
-                                <i>¥</i><em>5299.00</em><span>降价通知</span>
+                                <i>¥</i><em>{{sku.price}}</em><span>降价通知</span>
                             </div>
                             <div class="fr remark"><i>累计评价</i><em>612188</em></div>
                         </div>
@@ -191,51 +179,19 @@
                     </div>
                     <div class="clearfix choose">
                         <div id="specification" class="summary-wrap clearfix">
-                            <dl>
+                            <dl v-for="(value,key,index) in specialSpec" :key="index">
                                 <dt>
                                     <div class="fl title">
-                                        <i>选择颜色</i>
+                                        <i>{{specParamMap[key]}}</i>
                                     </div>
                                 </dt>
-                                <dd>
-                                    <a href="javascript:;" class="selected">
-                                        金色<span title="点击取消选择">&nbsp;</span>
+                                <!--点击某一项规格的时候讲将当前下标设置为被选中的下标-->
+                                <dd v-for="(param,i) in value" :key="i" @click="indexes[key]=i">
+                                    <!--如果当前下标==设置的下标 那么此项规格被选中 剩下的则不选中-->
+                                    <a href="javascript:;" :class="{selected: i == indexes[key]}">
+                                        {{param}}<span title="点击取消选择">&nbsp;</span>
                                     </a>
                                 </dd>
-                                <dd><a href="javascript:;">银色</a></dd>
-                                <dd><a href="javascript:;">黑色</a></dd>
-                            </dl>
-                            <dl>
-                                <dt>
-                                    <div class="fl title">
-                                        <i>内存容量</i>
-                                    </div>
-                                </dt>
-                                <dd><a href="javascript:;" class="selected">16G<span title="点击取消选择">&nbsp;</span>
-                                </a></dd>
-                                <dd><a href="javascript:;">64G</a></dd>
-                                <dd><a href="javascript:;" class="locked">128G</a></dd>
-                            </dl>
-                            <dl>
-                                <dt>
-                                    <div class="fl title">
-                                        <i>选择版本</i>
-                                    </div>
-                                </dt>
-                                <dd><a href="javascript:;" class="selected">公开版<span title="点击取消选择">&nbsp;</span>
-                                </a></dd>
-                                <dd><a href="javascript:;">移动版</a></dd>
-                            </dl>
-                            <dl>
-                                <dt>
-                                    <div class="fl title">
-                                        <i>购买方式</i>
-                                    </div>
-                                </dt>
-                                <dd><a href="javascript:;" class="selected">官方标配<span title="点击取消选择">&nbsp;</span>
-                                </a></dd>
-                                <dd><a href="javascript:;">移动优惠版</a></dd>
-                                <dd><a href="javascript:;"  class="locked">电信优惠版</a></dd>
                             </dl>
                         </div>
 
@@ -489,10 +445,7 @@
                                     <li>机身内存：64GB</li>
                                 </ul>
                                 <!--商品详情-->
-                                <div class="intro-detail">
-                                    <img src="/img/_/intro01.png" />
-                                    <img src="/img/_/intro02.png" />
-                                    <img src="/img/_/intro03.png" />
+                                <div class="intro-detail" th:utext="${spuDetailInfo.description }">
                                 </div>
                             </div>
                             <div id="two" class="tab-pane">
@@ -523,12 +476,12 @@
                                 </div>
                                 <div class="package-list">
                                     <h3>包装清单</h3>
-                                    <p>手机X1、快速指南X1、华为SuperCharge 充电器X1、三包凭证X1、Type-C 数字耳机X1、Type-C 数据线X1、取卡针X1、TPU保护壳X1、USB Type-C转3.5mm耳机转接线X1（备注：最终以实物为准）</p>
+                                    <p th:utext="${spuDetailInfo.packingList}"></p>
                                 </div>
 
                             </div>
                             <div id="three" class="tab-pane">
-                                <p>售后保障</p>
+                                <p th:utext="${spuDetailInfo.afterService}"></p>
                             </div>
                             <div id="four" class="tab-pane">
                                 <p>商品评价</p>
@@ -670,11 +623,44 @@
 <script src="/js/vue/vue.js"></script>
 <script src="/js/axios.min.js"></script>
 <script src="/js/common.js"></script>
+<!--在script标签中通过`th:inline="javascript"`来声明这是要特殊处理的js脚本-->
+<script th:inline="javascript">
+    // const obj = /*[[Thymeleaf表达式]]*/ 表示静态环境下的默认值
+
+    const spuInfo = /*[[${ spuInfo }]]*/{};
+    const brandInfo = /*[[${brandInfo}]]*/{};
+    const categoryInfo = /*[[${categoryInfo}]]*/{};
+    const skusList = /*[[${skusList}]]*/[];
+    const specParamMap = /*[[${specParamMap}]]*/[];
+    const spuDetailInfo = /*[[${spuDetailInfo}]]*/[];
+    const specialSpec = JSON.parse(/*[[${spuDetailInfo.specialSpec}]]*/);
+    let indexes = {};
+    Object.keys(specialSpec).forEach(key => {
+        indexes[key] = 0;
+    })
+</script>
 
 <script>
     var itemVm = new Vue({
         el:"#itemApp",
         data:{
+            spuInfo,
+            categoryInfo,
+            brandInfo,
+            skusList,
+            specParamMap,
+            specialSpec,
+            spuDetailInfo,
+            indexes
+        },
+        computed:{
+            sku(){
+                const index = Object.values(this.indexes).join("_");
+                return this.skusList.find(sku => sku.indexes == index);
+            },
+            images(){
+                return this.sku.images ? this.sku.images.split(",") : [];
+            }
         },
         components:{
             b2cTop: () => import('/js/pages/top.js')
@@ -704,12 +690,7 @@
 <script type="text/javascript" src="/js/plugins/jquery.jqzoom/jquery.jqzoom.js"></script>
 <script type="text/javascript" src="/js/plugins/jquery.jqzoom/zoom.js"></script>
 <script type="text/javascript" src="index/index.js"></script>
-<!--在script标签中通过`th:inline="javascript"`来声明这是要特殊处理的js脚本-->
-<script th:inline="javascript">
-    // const obj = /*[[Thymeleaf表达式]]*/ 表示静态环境下的默认值
-    const spuInfo = /*[[${ spuInfo }]]*/;
-    console.log(spuInfo);
-</script>
+
 </body>
 
 </html>
