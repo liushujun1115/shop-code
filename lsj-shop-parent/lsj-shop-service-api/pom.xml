@@ -16,6 +16,7 @@
     <modules>
         <module>lsj-shop-service-api-xxx</module>
         <module>lsj-shop-service-api-search</module>
+        <module>lsj-shop-service-api-template</module>
     </modules>
 
     <dependencies>

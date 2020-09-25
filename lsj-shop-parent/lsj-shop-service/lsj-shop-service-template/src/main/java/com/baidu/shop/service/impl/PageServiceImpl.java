@@ -31,16 +31,16 @@ import java.util.stream.Collectors;
 @Service
 public class PageServiceImpl implements PageService {
 
-    @Autowired
+//    @Autowired
     private GoodsFeign goodsFeign;
 
-    @Autowired
+//    @Autowired
     private BrandFeign brandFeign;
 
-    @Autowired
+//    @Autowired
     private CategoryFeign categoryFeign;
 
-    @Autowired
+//    @Autowired
     private SpecificationFeign specificationFeign;
 
     @Override
@@ -104,25 +104,29 @@ public class PageServiceImpl implements PageService {
                     map.put("spuDetailInfo",spuDetailInfo);
                 }
                 //查询规格组和规格参数
-//                SpecGroupDTO specGroupDTO = new SpecGroupDTO();
-//                specGroupDTO.setCid(spuInfo.getCid3());
-//                Result<List<SpecGroupEntity>> specGroupResult = specificationFeign.getSpecGroupInfo(specGroupDTO);
-//                if (specGroupResult.getCode() == HTTPStatus.OK) {
-//                    List<SpecGroupEntity> specGroupInfo = specGroupResult.getData();//规格组
-//                    List<SpecGroupDTO> groupsAndParams = specGroupInfo.stream().map(specGroup -> {
-//                        SpecGroupDTO sgd = BaiduBeanUtil.copyProperties(specGroup, SpecGroupDTO.class);
-//                        //规格参数--通用参数
-//                        SpecParamDTO paramDTO = new SpecParamDTO();
-//                        paramDTO.setGroupId(specGroup.getId());
-//                        paramDTO.setGeneric(true);
-//                        Result<List<SpecParamEntity>> specParamInfo = specificationFeign.getSpecParamInfo(paramDTO);
-//                        if (specParamInfo.getCode() == HTTPStatus.OK) {
-//
-//                        }
-//                        return sgd;
-//                    }).collect(Collectors.toList());
-//                    map.put("groupsAndParams",groupsAndParams);
-//                }
+                SpecGroupDTO specGroupDTO = new SpecGroupDTO();
+                specGroupDTO.setCid(spuInfo.getCid3());
+                Result<List<SpecGroupEntity>> specGroupResult = specificationFeign.getSpecGroupInfo(specGroupDTO);
+
+                if (specGroupResult.getCode() == HTTPStatus.OK) {
+                    List<SpecGroupEntity> specGroupInfo = specGroupResult.getData();//规格组
+
+                    List<SpecGroupDTO> groupsAndParams = specGroupInfo.stream().map(specGroup -> {
+
+                        SpecGroupDTO sgd = BaiduBeanUtil.copyProperties(specGroup, SpecGroupDTO.class);
+                        //规格参数--通用参数
+                        SpecParamDTO paramDTO = new SpecParamDTO();
+                        paramDTO.setGroupId(specGroup.getId());
+                        paramDTO.setGeneric(true);
+
+                        Result<List<SpecParamEntity>> specParamInfo = specificationFeign.getSpecParamInfo(paramDTO);
+                        if (specParamInfo.getCode() == HTTPStatus.OK) {
+                            sgd.setSpecParams(specParamInfo.getData());
+                        }
+                        return sgd;
+                    }).collect(Collectors.toList());
+                    map.put("groupsAndParams",groupsAndParams);
+                }
             }
         }
         return map;
