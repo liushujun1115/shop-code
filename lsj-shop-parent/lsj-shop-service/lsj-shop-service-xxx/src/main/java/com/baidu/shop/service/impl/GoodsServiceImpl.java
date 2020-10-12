@@ -3,10 +3,11 @@ package com.baidu.shop.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.baidu.shop.base.BaseApiService;
 import com.baidu.shop.base.Result;
+import com.baidu.shop.component.MrRabbitMQ;
+import com.baidu.shop.constant.MqMessageConstant;
 import com.baidu.shop.dto.BrandDTO;
 import com.baidu.shop.dto.SkuDTO;
 import com.baidu.shop.dto.SpuDTO;
-import com.baidu.shop.dto.SpuDetailDTO;
 import com.baidu.shop.entity.*;
 import com.baidu.shop.mapper.*;
 import com.baidu.shop.service.BrandService;
@@ -20,12 +21,10 @@ import com.github.pagehelper.PageInfo;
 import com.google.gson.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import tk.mybatis.mapper.entity.Example;
 
 import javax.annotation.Resource;
-import java.lang.reflect.Array;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -56,6 +55,9 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
 
     @Resource
     private SpuDetailMapper spuDetailMapper;
+
+    @Autowired
+    private MrRabbitMQ mrRabbitMQ;
 
     @Override
     public Result<List<SpuDTO>> getSpuInfo(SpuDTO spuDTO) {
@@ -94,9 +96,20 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
         return this.setResult(HTTPStatus.OK,info.getTotal()+"",spuList);
     }
 
+    // @Transactional  //jvm 虚拟机栈 -->入栈和出栈的问题
     @Override
-    @Transactional
     public Result<JSONObject> saveSpu(SpuDTO spuDTO) {
+        Integer spuId = this.saveSpuTransaction(spuDTO);
+        //发送消息
+        mrRabbitMQ.send(spuId + "", MqMessageConstant.SPU_ROUT_KEY_SAVE);
+        return this.setResultSuccess();
+    }
+
+    @Transactional
+    public Integer saveSpuTransaction(SpuDTO spuDTO){
+        //JDK的动态代理
+        //cglib动态代理
+        //aspectj动态代理
         Date date = new Date();
         //新增spu
         SpuEntity spuEntity = BaiduBeanUtil.copyProperties(spuDTO, SpuEntity.class);
@@ -113,8 +126,7 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
         spuDetailMapper.insertSelective(spuDetailEntity);
 
         this.saveSkusAndStocks(spuDTO.getSkus(),spuId,date);
-
-        return this.setResultSuccess();
+        return spuEntity.getId();
     }
 
     @Override
@@ -130,8 +142,14 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
     }
 
     @Override
-    @Transactional
     public Result<JSONObject> editSpu(SpuDTO spuDTO) {
+        this.editSpuTranscation(spuDTO);
+        mrRabbitMQ.send(spuDTO.getId() + "",MqMessageConstant.SPU_ROUT_KEY_UPDATE);
+        return this.setResultSuccess();
+    }
+
+    @Transactional
+    public void editSpuTranscation(SpuDTO spuDTO){
 //    1. 修改spu
         Date date = new Date();
         SpuEntity spuEntity = BaiduBeanUtil.copyProperties(spuDTO, SpuEntity.class);
@@ -147,13 +165,17 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
         stockMapper.deleteByIdList(skuIdArr);
 //    7. 将新的数据新增到数据库
         this.saveSkusAndStocks(spuDTO.getSkus(),spuDTO.getId(),date);
-
-        return this.setResultSuccess();
     }
 
     @Override
-    @Transactional
     public Result<JsonObject> removeSpu(Integer spuId) {
+        this.removeSpuTranscation(spuId);
+        mrRabbitMQ.send(spuId + "",MqMessageConstant.SPU_ROUT_KEY_DELETE);
+        return this.setResultSuccess();
+    }
+
+    @Transactional
+    public void removeSpuTranscation(Integer spuId) {
         //删除spu
         spuMapper.deleteByPrimaryKey(spuId);
         //删除spuDetail
@@ -166,7 +188,6 @@ public class GoodsServiceImpl extends BaseApiService implements GoodsService {
             //删除stock 同样先查询要删除的sku
             stockMapper.deleteByIdList(skuIdArr);
         }
-        return this.setResultSuccess();
     }
 
     @Override

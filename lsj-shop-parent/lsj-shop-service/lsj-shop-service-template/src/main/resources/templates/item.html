@@ -144,7 +144,7 @@
                         <div class="summary-wrap">
                             <div class="fl title"><i>价　　格</i></div>
                             <div class="fl price">
-                                <i>¥</i><em>{{sku.price}}</em><span>降价通知</span>
+                                <i>¥</i><em>{{ mrshop.formatPrice(sku.price) }}</em><span>降价通知</span>
                             </div>
                             <div class="fr remark"><i>累计评价</i><em>612188</em></div>
                         </div>
@@ -428,49 +428,40 @@
                         <div class="clearfix"></div>
                         <div class="tab-content tab-wraped">
                             <div id="one" class="tab-pane active">
-                                <ul class="goods-intro-list unstyled" style="list-style: none;">
-                                    <li>分辨率：1920*1080(FHD)</li>
-                                    <li>后置摄像头：1200万像素</li>
-                                    <li>前置摄像头：500万像素</li>
-                                    <li>核 数：其他</li>
-                                    <li>频 率：以官网信息为准</li>
-                                    <li>品牌： Apple</li>
-                                    <li>商品名称：APPLEiPhone 6s Plus</li>
-                                    <li>商品编号：1861098</li>
-                                    <li>商品毛重：0.51kg</li>
-                                    <li>商品产地：中国大陆</li>
-                                    <li>热点：指纹识别，Apple Pay，金属机身，拍照神器</li>
-                                    <li>系统：苹果（IOS）</li>
-                                    <li>像素：1000-1600万</li>
-                                    <li>机身内存：64GB</li>
+                                <ul class="goods-intro-list unstyled" style="list-style: none;"
+                                    v-for="(group,index) in groupsAndParams" :key="index"
+                                    v-if="group.specParams.length != 0">
+                                    <li v-for="(param,index) in group.specParams" :key="index">
+                                        {{param.name}} : {{genericSpec[param.id]}}
+                                    </li>
+<!--                                    <li>分辨率：1920*1080(FHD)</li>-->
+<!--                                    <li>后置摄像头：1200万像素</li>-->
+<!--                                    <li>前置摄像头：500万像素</li>-->
+<!--                                    <li>核 数：其他</li>-->
+<!--                                    <li>频 率：以官网信息为准</li>-->
+<!--                                    <li>品牌： Apple</li>-->
+<!--                                    <li>商品名称：APPLEiPhone 6s Plus</li>-->
+<!--                                    <li>商品编号：1861098</li>-->
+<!--                                    <li>商品毛重：0.51kg</li>-->
+<!--                                    <li>商品产地：中国大陆</li>-->
+<!--                                    <li>热点：指纹识别，Apple Pay，金属机身，拍照神器</li>-->
+<!--                                    <li>系统：苹果（IOS）</li>-->
+<!--                                    <li>像素：1000-1600万</li>-->
+<!--                                    <li>机身内存：64GB</li>-->
                                 </ul>
                                 <!--商品详情-->
                                 <div class="intro-detail" th:utext="${spuDetailInfo.description }">
                                 </div>
                             </div>
                             <div id="two" class="tab-pane">
-                                <div class="Ptable">
+                                <div class="Ptable"
+                                     v-for="(group,index) in groupsAndParams"
+                                     v-if="group.specParams.length != 0"
+                                     :key="index">
                                     <div class="Ptable-item">
-                                        <h3>主体</h3>
-                                        <dl>
-                                            <dt>品牌</dt><dd>华为（HUAWEI）</dd>
-                                            <dt>型号</dt><dd>CLT-AL00</dd>
-                                            <dt>入网型号</dt><dd>CLT-AL00</dd>
-                                            <dt>上市年份</dt><dd>2018年</dd>
-                                            <dt>上市月份</dt><dd>4月</dd>
-                                        </dl>
-                                    </div>
-                                    <div class="Ptable-item">
-                                        <h3>基本信息</h3>
-                                        <dl>
-                                            <dt>机身颜色</dt><dd>宝石蓝</dd>
-                                            <dt>机身长度（mm）</dt><dd>155.0 </dd>
-                                            <dt>机身宽度（mm）</dt><dd>73.9 </dd>
-                                            <dt>机身厚度（mm）</dt><dd>7.8</dd>
-                                            <dt>机身重量（g）</dt><dd>约180g（含电池）</dd>
-                                            <dt>输入方式</dt><dd>触控</dd>
-                                            <dt>运营商标志或内容</dt><dd>无</dd>
-                                            <dt>机身材质分类</dt><dd>玻璃后盖</dd>
+                                        <h3>{{group.name}}</h3>
+                                        <dl v-for="(param,index) in group.specParams" :key="index">
+                                            <dt>{{param.name}}</dt><dd>{{genericSpec[param.id]}}</dd>
                                         </dl>
                                     </div>
                                 </div>
@@ -478,7 +469,6 @@
                                     <h3>包装清单</h3>
                                     <p th:utext="${spuDetailInfo.packingList}"></p>
                                 </div>
-
                             </div>
                             <div id="three" class="tab-pane">
                                 <p th:utext="${spuDetailInfo.afterService}"></p>
@@ -632,8 +622,10 @@
     const categoryInfo = /*[[${categoryInfo}]]*/{};
     const skusList = /*[[${skusList}]]*/[];
     const specParamMap = /*[[${specParamMap}]]*/[];
-    const spuDetailInfo = /*[[${spuDetailInfo}]]*/[];
+    const spuDetailInfo = /*[[${spuDetailInfo}]]*/{};
     const specialSpec = JSON.parse(/*[[${spuDetailInfo.specialSpec}]]*/);
+    const genericSpec = JSON.parse(/*[[${spuDetailInfo.genericSpec}]]*/);
+    const groupsAndParams = /*[[${groupsAndParams}]]*/[];
     let indexes = {};
     Object.keys(specialSpec).forEach(key => {
         indexes[key] = 0;
@@ -644,13 +636,16 @@
     var itemVm = new Vue({
         el:"#itemApp",
         data:{
+            mrshop,
             spuInfo,
             categoryInfo,
             brandInfo,
             skusList,
             specParamMap,
             specialSpec,
+            genericSpec,
             spuDetailInfo,
+            groupsAndParams,
             indexes
         },
         computed:{

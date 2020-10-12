@@ -89,7 +89,7 @@ public class ShopElasticsearchServiceImpl extends BaseApiService implements Shop
             log.info("映射创建成功");
         }
         //查询数据
-        List<GoodsDoc> goodsDocs = this.esGoodsInfo();
+        List<GoodsDoc> goodsDocs = this.esGoodsInfo(new SpuDTO());
         elasticsearchRestTemplate.save(goodsDocs);
         log.info("新增数据成功");
         return this.setResultSuccess();
@@ -125,6 +125,24 @@ public class ShopElasticsearchServiceImpl extends BaseApiService implements Shop
         Map<String, List<String>> specParamValueMap = this.getSpecParam(hotCid, search);
 
         return new GoodsResponse(total,totalPage,brandList,categoryList,goodsList,specParamValueMap);
+    }
+
+    @Override
+    public Result<JSONObject> saveData(Integer spuId) {
+        SpuDTO spuDTO = new SpuDTO();
+        spuDTO.setId(spuId);
+        List<GoodsDoc> goodsDocs = this.esGoodsInfo(spuDTO);
+        GoodsDoc goodsDoc = goodsDocs.get(0);
+        elasticsearchRestTemplate.save(goodsDoc);
+        return this.setResultSuccess();
+    }
+
+    @Override
+    public Result<JSONObject> delData(Integer spuId) {
+        GoodsDoc goodsDoc = new GoodsDoc();
+        goodsDoc.setId(spuId.longValue());
+        elasticsearchRestTemplate.delete(goodsDoc);
+        return this.setResultSuccess();
     }
 
     //聚合查询规格参数
@@ -233,12 +251,11 @@ public class ShopElasticsearchServiceImpl extends BaseApiService implements Shop
     }
 
     //mysql数据迁移到es做数据准备
-    private List<GoodsDoc> esGoodsInfo() {
-        //查询spu
-        SpuDTO spuDTO = new SpuDTO();
+    private List<GoodsDoc> esGoodsInfo(SpuDTO spuDTO) {
+
 //        spuDTO.setPage(1);
 //        spuDTO.setRows(5);
-
+        //查询spu
         Result<List<SpuDTO>> spuInfo = goodsFeign.getSpuInfo(spuDTO);
 
         //查询出来多个数据是多个spu
@@ -284,7 +301,6 @@ public class ShopElasticsearchServiceImpl extends BaseApiService implements Shop
     //通过spuID查询skuList和price
     private Map<List<Long>, List<Map<String, Object>>> getSkusAndPriceList(Integer spuId){
         Map<List<Long>, List<Map<String, Object>>> skus = new HashMap<>();
-
         Result<List<SkuDTO>> skuResult = goodsFeign.getSkuBySpuId(spuId);
 
         List<Long> priceList = new ArrayList<>();
