@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 /**
  * @ClassName ESHighLightUtil
- * @Description: TODO
+ * @Description: 高亮字段
  * @Author liushujun
  * @Date 2020/9/16
  * @Version V1.0

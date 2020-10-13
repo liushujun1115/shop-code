@@ -4,7 +4,7 @@ import org.springframework.beans.BeanUtils;
 
 /**
  * @ClassName BaiduBeanUtil
- * @Description: TODO
+ * @Description: 实体类转换
  * @Author liushujun
  * @Date 2020/8/31
  * @Version V1.0

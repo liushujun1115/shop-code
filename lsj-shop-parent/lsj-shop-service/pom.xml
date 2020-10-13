@@ -17,6 +17,7 @@
         <module>lsj-shop-service-xxx</module>
         <module>lsj-shop-service-search</module>
         <module>lsj-shop-service-template</module>
+        <module>lsj-shop-service-user</module>
     </modules>
 
     <dependencies>
