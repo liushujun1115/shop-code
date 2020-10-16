@@ -3,11 +3,14 @@ package com.baidu.shop.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.baidu.shop.base.BaseApiService;
 import com.baidu.shop.base.Result;
+import com.baidu.shop.constant.MrShopConstant;
 import com.baidu.shop.constant.UserConstant;
 import com.baidu.shop.dto.UserDTO;
 import com.baidu.shop.entity.UserEntity;
 import com.baidu.shop.mapper.UserMapper;
+import com.baidu.shop.redis.repository.RedisRepository;
 import com.baidu.shop.service.UserService;
+import com.baidu.shop.status.HTTPStatus;
 import com.baidu.shop.utils.BCryptUtil;
 import com.baidu.shop.utils.BaiduBeanUtil;
 import com.baidu.shop.utils.LuosimaoDuanxinUtil;
@@ -34,6 +37,9 @@ public class UserServiceImpl extends BaseApiService implements UserService {
 
     @Resource
     private UserMapper userMapper;
+
+    @Autowired
+    private RedisRepository redisRepository;
 
     @Override
     public Result<JSONObject> register(UserDTO userDTO) {
@@ -63,7 +69,18 @@ public class UserServiceImpl extends BaseApiService implements UserService {
     public Result<JSONObject> sendValidCode(UserDTO userDTO) {
         String code = (int)((Math.random() * 9 + 1) * 100000) + "";
         log.debug("向手机号码:{} 发送验证码:{}",userDTO.getPhone(),code);
+        redisRepository.set(MrShopConstant.USER_PHONE_CODE_PRE + userDTO.getPhone(),code);
+        redisRepository.expire(MrShopConstant.USER_PHONE_CODE_PRE + userDTO.getPhone(),120);
         //LuosimaoDuanxinUtil.sendSpeak(userDTO.getPhone(),code);
+        return this.setResultSuccess();
+    }
+
+    @Override
+    public Result<JSONObject> checkVaildCode(String phone, String validcode) {
+        String redisVaildCode = redisRepository.get(MrShopConstant.USER_PHONE_CODE_PRE + phone);
+        if(!validcode.equals(redisVaildCode)){
+            return this.setResultError(HTTPStatus.PHONE_CODE_VALID_ERROR,"验证码输入错误");
+        }
         return this.setResultSuccess();
     }
 }
