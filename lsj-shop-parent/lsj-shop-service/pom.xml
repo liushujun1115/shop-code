@@ -18,6 +18,8 @@
         <module>lsj-shop-service-search</module>
         <module>lsj-shop-service-template</module>
         <module>lsj-shop-service-user</module>
+        <module>mingrui-shop-service-car</module>
+        <module>lsj-shop-service-car</module>
     </modules>
 
     <dependencies>

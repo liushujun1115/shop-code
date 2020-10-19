@@ -18,6 +18,7 @@
         <module>lsj-shop-service-api-search</module>
         <module>lsj-shop-service-api-template</module>
         <module>lsj-shop-service-api-user</module>
+        <module>lsj-shop-service-api-car</module>
     </modules>
 
     <dependencies>
