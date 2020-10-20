@@ -58,6 +58,7 @@ public class UserOauthController extends BaseApiService {
             , HttpServletResponse response,HttpServletRequest request){
 
         try {
+            //获取用户信息
             UserInfo userInfo = JwtUtils.getInfoFromToken(token,jwtConfig.getPublicKey());
 
             //每当用户在页面进行新的操作,应该刷新token的过期时间

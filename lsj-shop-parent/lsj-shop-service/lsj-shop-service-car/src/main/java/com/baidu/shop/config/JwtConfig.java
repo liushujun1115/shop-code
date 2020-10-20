@@ -22,10 +22,12 @@ public class JwtConfig {
 
     @Value("${mrshop.jwt.pubKeyPath}")
     private String pubKeyPath;// 公钥
+
     @Value("${mrshop.jwt.cookieName}")
     private String cookieName;// cookie名称
 
     private PublicKey publicKey; // 公钥
+
     private static final Logger logger = LoggerFactory.getLogger(JwtConfig.class);
 
     @PostConstruct

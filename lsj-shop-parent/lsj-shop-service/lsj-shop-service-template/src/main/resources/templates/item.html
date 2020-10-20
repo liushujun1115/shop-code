@@ -662,7 +662,9 @@
                         skuId:this.sku.id,
                         num:this.num
                     }).then(resp => {
-                        console.log(resp);
+                        if(resp.data.code == 200){
+                            window.location.href = '../success-cart.html';
+                        }
                     }).catch(error => console.log(error));
 
                 }).catch(() => {
@@ -676,7 +678,7 @@
                         car = {
                             skuId:this.sku.id,
                             title:this.sku.title,
-                            image:this.sku.images.length > 0 ? this.sku.images[0] : '',
+                            image:this.images.length > 0 ? this.images[0] : '',
                             price:this.sku.price,
                             num:this.num,
                             ownSpec:JSON.stringify(this.ownSpec)

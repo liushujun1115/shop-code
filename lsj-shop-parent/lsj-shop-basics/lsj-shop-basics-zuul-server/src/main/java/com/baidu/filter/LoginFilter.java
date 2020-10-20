@@ -18,7 +18,7 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * @ClassName LoginFilter
- * @Description: TODO
+ * @Description: 登录校验
  * @Author liushujun
  * @Date 2020/10/17
  * @Version V1.0
@@ -31,16 +31,19 @@ public class LoginFilter extends ZuulFilter {
 
     private static final Logger logger = LoggerFactory.getLogger(JwtConfig.class);
 
+    //前缀后缀过滤器啥的
     @Override
     public String filterType() {
         return FilterConstants.PRE_TYPE;
     }
 
+    //排序 0代表第一个加载的filter 登录的优先级不高所以往后排
     @Override
     public int filterOrder() {
         return 5;//优先级
     }
 
+    //决定过滤器能不能起作用 在配置文件中定义的url不进行拦截
     @Override
     public boolean shouldFilter() {
         //获取上下文
@@ -55,6 +58,7 @@ public class LoginFilter extends ZuulFilter {
         return !jwtConfig.getExcludePath().contains(requestURI);
     }
 
+    //校验登录  获取token 能获取到正常放行登录成功 没有获取到 说明用户没有登陆 返回状态码
     @Override
     public Object run() throws ZuulException {
         //获取上下文

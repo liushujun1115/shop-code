@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * @ClassName RedisRepository
- * @Description: TODO
+ * @Description: 缓存库
  * @Author liushujun
  * @Date 2020/10/19
  * @Version V1.0
