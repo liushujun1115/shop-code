@@ -19,6 +19,8 @@
         <module>lsj-shop-service-api-template</module>
         <module>lsj-shop-service-api-user</module>
         <module>lsj-shop-service-api-car</module>
+        <module>mingrui-shop-service-api-order</module>
+        <module>lsj-shop-service-api-order</module>
     </modules>
 
     <dependencies>

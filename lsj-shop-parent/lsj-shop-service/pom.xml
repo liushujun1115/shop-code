@@ -20,6 +20,7 @@
         <module>lsj-shop-service-user</module>
         <module>mingrui-shop-service-car</module>
         <module>lsj-shop-service-car</module>
+        <module>lsj-shop-service-order</module>
     </modules>
 
     <dependencies>
