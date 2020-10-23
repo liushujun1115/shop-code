@@ -81,8 +81,10 @@ public class CarServiceImpl extends BaseApiService implements CarService {
                     log.debug("添加商品到购物车redis hashkey : {}, mapkey : {}, value : {}",MrShopConstant.USER_GOODS_CAR_PRE + userInfo.getId(),car.getSkuId(),JSONUtil.toJsonString(car));
                 }
             }
-            redisRepository.setHash(MrShopConstant.USER_GOODS_CAR_PRE + userInfo.getId()
-                    ,car.getSkuId() + "", JSONUtil.toJsonString(saveCar));
+            boolean b = redisRepository.setHash(MrShopConstant.USER_GOODS_CAR_PRE + userInfo.getId()
+                    , car.getSkuId() + "", JSONUtil.toJsonString(saveCar));
+
+            log.debug("是否成功" + b);
 
             log.debug("新增数据到redis成功");
         } catch (Exception e) {

@@ -21,6 +21,7 @@
         <module>lsj-shop-service-api-car</module>
         <module>mingrui-shop-service-api-order</module>
         <module>lsj-shop-service-api-order</module>
+        <module>lsj-shop-service-api-pay</module>
     </modules>
 
     <dependencies>

@@ -7,6 +7,7 @@ import com.baidu.shop.config.JwtConfig;
 import com.baidu.shop.constant.MrShopConstant;
 import com.baidu.shop.dto.Car;
 import com.baidu.shop.dto.OrderDTO;
+import com.baidu.shop.dto.OrderInfo;
 import com.baidu.shop.dto.UserInfo;
 import com.baidu.shop.entity.OrderDetailEntity;
 import com.baidu.shop.entity.OrderEntity;
@@ -16,11 +17,13 @@ import com.baidu.shop.mapper.OrderMapper;
 import com.baidu.shop.mapper.OrderStatusMapper;
 import com.baidu.shop.redis.repository.RedisRepository;
 import com.baidu.shop.status.HTTPStatus;
+import com.baidu.shop.utils.BaiduBeanUtil;
 import com.baidu.shop.utils.IdWorker;
 import com.baidu.shop.utils.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RestController;
+import tk.mybatis.mapper.entity.Example;
 
 import javax.annotation.Resource;
 import java.util.Arrays;
@@ -120,14 +123,35 @@ public class OrderServiceImpl extends BaseApiService implements OrderService {
             Arrays.asList(orderDTO.getSkuIds().split(",")).stream().forEach(skuIdStr -> {
                 redisRepository.delHash(MrShopConstant.USER_GOODS_CAR_PRE + userInfo.getId(),skuIdStr);
             });
-            //此时要保证redis和myqsl双写一致性
+            //此时要保证redis和mysql双写一致性
             //更新库存-->用户已经下单了,这个时候减库存
+//            Arrays.asList(orderDTO.getSkuIds().split(",")).stream().forEach(skuIdStr -> {
+//
+//            });
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return this.setResult(HTTPStatus.OK,"",orderId);
+        return this.setResult(HTTPStatus.OK,"",orderId+"");
+    }
+
+    @Override
+    public Result<OrderInfo> getOrderByOrderId(Long orderId) {
+
+        OrderEntity orderEntity = orderMapper.selectByPrimaryKey(orderId);
+
+        OrderInfo orderInfo = BaiduBeanUtil.copyProperties(orderEntity,OrderInfo.class);
+
+        Example example = new Example(OrderDetailEntity.class);
+        example.createCriteria().andEqualTo("orderId",orderInfo.getOrderId());
+        List<OrderDetailEntity> orderDetailList = orderDetailMapper.selectByExample(example);
+        orderInfo.setOrderDetailList(orderDetailList);
+
+        OrderStatusEntity orderStatusEntity = orderStatusMapper.selectByPrimaryKey(orderInfo.getOrderId());
+        orderInfo.setOrderStatusEntity(orderStatusEntity);
+
+        return this.setResultSuccess(orderInfo);
     }
 
 }
